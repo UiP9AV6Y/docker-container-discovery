@@ -1,0 +1,36 @@
+---
+
+version: '2.4'
+
+services:
+  disco:
+    image: docker-container-discovery
+    build:
+      context: ..
+      args:
+        IMAGE_FLAVOUR: '2.6'
+    hostname: docker-disco
+    labels:
+      'com.docker.container-discovery/ignore': 'true'
+    environment:
+      DCD_TLD: 'docker.test'
+      DCD_VERBOSITY: info
+      DCD_DOMAIN_TEMPLATE_1: '{label.com.docker.compose.service}.{label.com.docker.compose.project}'
+      DCD_DOMAIN_TEMPLATE_2: '{container.name}'
+      DCD_DOMAIN_TEMPLATE_3: '{container.ident}.service'
+      DCD_DOMAIN_TEMPLATE_3: '{image.name}'
+    volumes:
+      - type: bind
+        read_only: true
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    ports:
+      - "127.0.0.1:19053:19053"
+      - "127.0.0.1:10053:10053"
+      - "127.0.0.1:10053:10053/udp"
+  app:
+    image: nginx:alpine
+    hostname: my-app
+    labels:
+      'com.docker.container-discovery/ident.1': 'www.my-app'
+      'com.docker.container-discovery/ident.2': 'my-app'
