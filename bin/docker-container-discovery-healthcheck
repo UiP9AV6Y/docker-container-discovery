@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'async'
+require 'async/dns'
+
+begin
+  require 'docker/container_discovery'
+rescue LoadError
+  $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+  require 'docker/container_discovery'
+end
+
+def check_dns(ip, port)
+  task = Async do
+    udp_endpoint = [:udp, ip, port]
+    tcp_endpoint = [:tcp, ip, port]
+    resolver = Async::DNS::Resolver.new([udp_endpoint, tcp_endpoint])
+    # we just want a response, even if
+    # it does not yield any information
+    response = resolver.query('test.')
+
+    raise 'No response' if response.nil?
+  end
+
+  task.wait
+  true
+rescue StandardError => e
+  puts "DNS check failed: #{e.message}"
+  false
+end
+
+def check_http(ip, port)
+  task = Async do |t|
+    t.with_timeout(1) do
+      s = TCPSocket.new(ip, port)
+      s.close
+    end
+  end
+
+  task.wait
+  true
+rescue StandardError => e
+  puts "HTTP check failed: #{e.message}"
+  false
+end
+
+Async.logger.off!
+exit(1) unless check_http('127.0.0.1', Docker::ContainerDiscovery::Metrics::DEFAULT_PORT)
+exit(1) unless check_dns('127.0.0.1', Docker::ContainerDiscovery::Names::DEFAULT_PORT)
+exit(0)

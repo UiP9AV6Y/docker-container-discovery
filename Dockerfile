@@ -19,6 +19,9 @@ FROM ruby:${IMAGE_FLAVOUR}
 COPY --from=builder /build/ $GEM_HOME/
 RUN docker-container-discovery --version
 
+EXPOSE 19053 10053 10053/udp
+HEALTHCHECK --start-period=5s --timeout=5s \
+  CMD docker-container-discovery-healthcheck
 CMD ["docker-container-discovery"]
 
 ARG BUILD_DATE="1970-01-01T00:00:00Z"

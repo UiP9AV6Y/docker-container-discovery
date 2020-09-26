@@ -8,6 +8,8 @@ require 'async/dns'
 module Docker
   module ContainerDiscovery
     class Names < Async::DNS::Server
+      DEFAULT_PORT = 10_053
+
       attr_reader :tld, :refresh, :retry, :expire, :min_ttl
 
       def initialize(resolver, registry, logger, options = {})
@@ -22,7 +24,7 @@ module Docker
         @min_ttl = options[:min_ttl] || 172_800
 
         bind = options[:bind] || '0.0.0.0'
-        port = options[:port] || 10_053
+        port = options[:port] || DEFAULT_PORT
         listen = case options[:proto]
                  when :tcp
                    [[:tcp, bind, port]]

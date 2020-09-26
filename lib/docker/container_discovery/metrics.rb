@@ -9,9 +9,11 @@ require 'protocol/http/body/buffered'
 module Docker
   module ContainerDiscovery
     class Metrics
+      DEFAULT_PORT = 19_053
+
       def initialize(registry, logger, options = {})
         bind = options[:bind] || '0.0.0.0'
-        port = options[:port] || '19053'
+        port = options[:port] || DEFAULT_PORT
         reuse = options[:reuse] || false
         endpoint = Async::HTTP::Endpoint.parse("http://#{bind}:#{port}", reuse_port: reuse)
 
