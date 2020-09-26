@@ -25,8 +25,12 @@ module Docker
         @retries = options[:retries] || 0
         @timeout = options[:retry_timeout] || 5
         @connection_options = {
-          read_timeout: 60
-        }
+          read_timeout: 60,
+          client_cert: options[:client_cert],
+          client_key: options[:client_key],
+          ssl_ca_file: options[:ssl_ca_file],
+          scheme: options[:scheme],
+        }.delete_if { |k, v| v.nil? }
       end
 
       def run
