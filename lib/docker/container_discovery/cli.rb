@@ -205,9 +205,9 @@ module Docker
                   'using this mask') do |v|
           @resolver_opts[:container_cidr] = v
         end
-        parser.on('--docker-socket FILE', IPAddr,
+        parser.on('--docker-socket FILE', String,
                   'Socket to listen for Docker events') do |v|
-          raise OptionParser::InvalidArgument, 'File is not a socket' unless File.socket?(v)
+          raise OptionParser::InvalidArgument, "Invalid socket: #{v}" unless File.socket?(v)
 
           @client_opts[:socket] = v
         end
