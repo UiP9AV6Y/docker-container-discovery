@@ -19,11 +19,12 @@ services:
       DCD_DOMAIN_TEMPLATE_2: '{container.name}'
       DCD_DOMAIN_TEMPLATE_3: '{container.ident}.service'
       DCD_DOMAIN_TEMPLATE_3: '{image.name}'
+      DCD_DOCKER_SOCKET: /tmp/docker.sock
     volumes:
       - type: bind
         read_only: true
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
+        source: /run/docker.sock
+        target: /tmp/docker.sock
     ports:
       - "127.0.0.1:19053:19053"
       - "127.0.0.1:10053:10053"
