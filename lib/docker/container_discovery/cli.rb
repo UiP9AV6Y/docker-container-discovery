@@ -15,6 +15,18 @@ module Docker
         info: ::Console::Logger::INFO,
         debug: ::Console::Logger::DEBUG
       }.freeze
+      FALSY_VALUES = %w[
+        false
+        no
+        off
+        0
+      ].freeze
+      TRUTHY_VALUES = %w[
+        true
+        yes
+        on
+        1
+      ].freeze
       ENV_PREFIX = 'DCD_'
 
       def initialize(program)
@@ -244,14 +256,16 @@ module Docker
 
         names.map do |n|
           var = ENV_PREFIX + n.upcase.tr('-', '_')
-          value = hsh[var]
+          value = hsh[var].to_s
 
-          if value == 'false'
-            args.push('--no-' + n)
-          elsif value == 'true'
-            args.push('--' + n)
-          elsif !value.nil?
-            args.push('--' + n, value)
+          if value.empty?
+            next
+          elsif FALSY_VALUES.include?(value.downcase)
+            args.push("--no-#{n}")
+          elsif TRUTHY_VALUES.include?(value.downcase)
+            args.push("--#{n}")
+          else
+            args.push("--#{n}", value)
           end
         end
 

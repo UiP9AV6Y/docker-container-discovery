@@ -119,6 +119,10 @@ instructions. The information is extracted from the container labels:
 
 The behaviour of *DCD* can be controlled via commandline argument or environment
 variables.
+Arguments which do not accept a value, can be
+enabled via environment variables whose value
+are *true*, *yes*, *on*, or *1*. To invert
+their behaviour use *false*, *no*, *off, or *0*.
 
 * `--domain-template` (**DCD_DOMAIN_TEMPLATE**)
 
