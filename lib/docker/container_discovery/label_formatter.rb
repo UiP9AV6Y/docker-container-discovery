@@ -50,7 +50,7 @@ module Docker
       end
 
       def sanitize(str)
-        str.to_s.downcase[0, MAX_LABEL_LENGTH].gsub(/[^a-zA-Z0-9\_\-\.]/, '')
+        str.to_s.downcase[0, MAX_LABEL_LENGTH].gsub(/[^a-zA-Z0-9_\-.]/, '')
       end
     end
   end

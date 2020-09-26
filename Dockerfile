@@ -1,6 +1,6 @@
-ARG IMAGE_FLAVOUR=2.6-slim
+ARG IMAGE_FLAVOUR=2.7-slim
 
-FROM ruby:2.6 AS builder
+FROM ruby:2.7 AS builder
 
 WORKDIR /src
 

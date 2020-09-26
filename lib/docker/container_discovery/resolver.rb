@@ -8,9 +8,9 @@ module Docker
       attr_reader :last_update
 
       LABEL_NS = 'com.docker.container-discovery/'
-      IGNORE_LABEL = LABEL_NS + 'ignore'
-      ADVERTISE_LABEL = LABEL_NS + 'advertise'
-      IDENT_LABEL = LABEL_NS + 'ident.'
+      IGNORE_LABEL = "#{LABEL_NS}ignore"
+      ADVERTISE_LABEL = "#{LABEL_NS}advertise"
+      IDENT_LABEL = "#{LABEL_NS}ident."
       SELECT_EXCLUDES = ['127.0.0.1', '::1'].freeze
 
       def initialize(formatter, logger, options = {})

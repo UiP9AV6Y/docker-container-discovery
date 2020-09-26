@@ -89,8 +89,8 @@ RSpec.describe Docker::ContainerDiscovery::ArrayTree do
     it { expect(subject.dig('1.1', '1.2', '1.3')).to contain_exactly(['oneDOTthree']) }
     it { expect(subject.dig('2.1', '2.2')).to contain_exactly(%w[twoDOTtwo twoDOTtwo2]) }
     it { expect(subject.dig('1.1', '1.2')).to contain_exactly(['oneDOTtwo']) }
-    it { expect(subject.dig('2.1')).to contain_exactly([]) }
-    it { expect(subject.dig('3.1')).to be_empty }
+    it { expect(subject['2.1']).to contain_exactly([]) }
+    it { expect(subject['3.1']).to be_empty }
     it { expect(subject.dig).to contain_exactly([]) }
   end
 
@@ -98,7 +98,7 @@ RSpec.describe Docker::ContainerDiscovery::ArrayTree do
     context 'using keys' do
       it('replaces the input') do
         expect(subject.dig('1.1', '1.2')).to be_empty
-        expect(subject.dig('1.1')).to be_empty
+        expect(subject['1.1']).to be_empty
         expect(subject.set('oneDOTtwo', '1.1', '1.2')).to contain_exactly([])
         expect(subject.dig('1.1', '1.2')).to contain_exactly(['oneDOTtwo'])
         expect(subject.set('one-two', '1.1', '1.2')).to contain_exactly(['oneDOTtwo'])
@@ -129,7 +129,7 @@ RSpec.describe Docker::ContainerDiscovery::ArrayTree do
     context 'using keys' do
       it('appends the input') do
         expect(subject.dig('1.1', '1.2')).to be_empty
-        expect(subject.dig('1.1')).to be_empty
+        expect(subject['1.1']).to be_empty
         expect(subject.append('oneDOTtwo', '1.1', '1.2')).to contain_exactly(['oneDOTtwo'])
         expect(subject.dig('1.1', '1.2')).to contain_exactly(['oneDOTtwo'])
         expect(subject.append('one-two', '1.1', '1.2')).to contain_exactly(%w[oneDOTtwo one-two])
@@ -202,7 +202,7 @@ RSpec.describe Docker::ContainerDiscovery::ArrayTree do
         expect(subject.append('three', '1.1', '1.2.3')).to contain_exactly(['three'])
         expect(subject.append('four', '1.1')).to contain_exactly(['four'])
         expect(subject.delete('*')).to contain_exactly(['four'])
-        expect(subject.dig('1.1')).to be_empty
+        expect(subject['1.1']).to be_empty
         expect(subject.dig('1.1', '1.2.1')).to be_empty
         expect(subject.dig('1.1', '1.2.2')).to be_empty
         expect(subject.dig('1.1', '1.2.3')).to be_empty

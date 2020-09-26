@@ -137,6 +137,33 @@ their behaviour use *false*, *no*, *off, or *0*.
 
   Default: /var/run/docker.sock
 
+* `--docker-host` (**DCD_DOCKER_HOST**)
+
+  Host to connect to for Docker events.
+  Uses TCP for communication instead of a unix
+  socket like `--docker-socket`.
+
+* `--docker-port` (**DCD_DOCKER_PORT**)
+
+  Port to connect to for Docker events.
+  Only usable in combination with `--docker-host`.
+
+  Default: 2375
+
+* `--connect-retries` (**DCD_CONNECT_RETRIES**)
+
+  Number of retries to connect to remote docker.
+  Only really useful when connecting via TCP using
+  `--docker-host`.
+
+  Default: 0
+
+* `--connect-timeout` (**DCD_CONNECT_TIMEOUT**)
+
+  Seconds to wait between reconnects.
+
+  Default: 5
+
 * `--container-cidr` (**DCD_CONTAINER_CIDR**)
 
   Filter for container addresses. If a container has multiple addresses

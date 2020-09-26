@@ -11,9 +11,21 @@ module Docker
         @renderer = options[:renderer] || Prometheus::Client::Formats::Text
 
         prefix = options[:metrics_prefix] || 'dcd'
-        @queries = storage.counter(:"#{prefix}_queries_total", 'DNS queries received')
-        @failures = storage.counter(:"#{prefix}_queries_failed", 'DNS queries which yielded NXDOMAIN')
-        @containers = storage.gauge(:"#{prefix}_containers", 'Discovered containers')
+        @queries = storage.counter(
+          :"#{prefix}_queries_total",
+          docstring: 'DNS queries received',
+          labels: [:record]
+        )
+        @failures = storage.counter(
+          :"#{prefix}_queries_failed",
+          docstring: 'DNS queries which yielded NXDOMAIN',
+          labels: [:record]
+        )
+        @containers = storage.gauge(
+          :"#{prefix}_containers",
+          docstring: 'Discovered containers',
+          labels: [:endpoint]
+        )
       end
 
       def content_type
@@ -21,19 +33,19 @@ module Docker
       end
 
       def fail_query!(in_class)
-        @failures.increment(record: in_class)
+        @failures.increment(labels: { record: in_class })
       end
 
       def receive_query!(in_class)
-        @queries.increment(record: in_class)
+        @queries.increment(labels: { record: in_class })
       end
 
       def add_container!(endpoint)
-        @containers.increment(endpoint: endpoint)
+        @containers.increment(labels: { endpoint: endpoint })
       end
 
       def remove_container!(endpoint)
-        @containers.decrement(endpoint: endpoint)
+        @containers.decrement(labels: { endpoint: endpoint })
       end
 
       def render

@@ -33,6 +33,10 @@ module Docker
           search(branch).map(&:value)
         end
 
+        def [](branch)
+          dig([branch])
+        end
+
         def remove(value, branch)
           search(branch).map do |child|
             value.map { |v| child.value.delete(v) }.compact
@@ -131,7 +135,11 @@ module Docker
       end
 
       def dig(*branch)
-        @root.dig(branch)
+        @root.dig(branch) # rubocop:disable Style/SingleArgumentDig
+      end
+
+      def [](branch)
+        @root.dig([branch]) # rubocop:disable Style/SingleArgumentDig
       end
 
       def set(value, *branch)

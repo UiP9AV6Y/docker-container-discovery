@@ -68,6 +68,10 @@ module Docker
         tpls = select_domain_templates(env)
         argv = select_env_args(env,
                                'docker-socket',
+                               'docker-host',
+                               'docker-port',
+                               'connect-retries',
+                               'connect-timeout',
                                'container-cidr',
                                'tld',
                                'advertise',
@@ -136,7 +140,7 @@ module Docker
         end
         parser.on_tail('-V', '--verbosity LEVEL', LOG_LEVELS.keys,
                        'Set the output verbosity',
-                       '(' + LOG_LEVELS.keys.join(', ') + ')') do |v|
+                       "(#{LOG_LEVELS.keys.join(', ')})") do |v|
           @log_level = LOG_LEVELS[v]
         end
       end
@@ -211,6 +215,22 @@ module Docker
 
           @client_opts[:socket] = v
         end
+        parser.on('--docker-host HOSTNAME', String,
+                  'Host to connect to for Docker events') do |v|
+          @client_opts[:host] = v
+        end
+        parser.on('--docker-port PORT', Integer,
+                  'Port to connect to for Docker events') do |v|
+          @client_opts[:port] = v
+        end
+        parser.on('--connect-retries [COUNT]', Integer,
+                  'Number of retries to connect to remote docker host') do |v|
+          @client_opts[:retries] = v
+        end
+        parser.on('--connect-timeout SECONDS', Integer,
+                  'Seconds to wait between reconnects') do |v|
+          @client_opts[:retry_timeout] = v
+        end
       end
 
       def decorate_metrics(parser)
@@ -229,17 +249,15 @@ module Docker
 
       def decorate_init(parser)
         parser.accept(IPAddr) do |addr|
-          begin
-            IPAddr.new(addr)
-          rescue IPAddr::InvalidAddressError => e
-            raise OptionParser::InvalidArgument, e
-          end
+          IPAddr.new(addr)
+        rescue IPAddr::InvalidAddressError => e
+          raise OptionParser::InvalidArgument, e
         end
       end
 
       def select_domain_templates(hsh)
         argv = []
-        needle = ENV_PREFIX + 'DOMAIN_TEMPLATE'
+        needle = "#{ENV_PREFIX}DOMAIN_TEMPLATE"
 
         hsh.each do |key, value|
           next unless key.start_with?(needle)
@@ -258,7 +276,7 @@ module Docker
           var = ENV_PREFIX + n.upcase.tr('-', '_')
           value = hsh[var].to_s
 
-          if value.empty?
+          if value.empty? # rubocop:disable Style/GuardClause
             next
           elsif FALSY_VALUES.include?(value.downcase)
             args.push("--no-#{n}")

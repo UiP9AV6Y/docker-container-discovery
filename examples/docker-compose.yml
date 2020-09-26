@@ -8,7 +8,7 @@ services:
     build:
       context: ..
       args:
-        IMAGE_FLAVOUR: '2.6'
+        IMAGE_FLAVOUR: '2.7'
     hostname: docker-disco
     labels:
       'com.docker.container-discovery/ignore': 'true'

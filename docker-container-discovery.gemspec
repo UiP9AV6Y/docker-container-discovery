@@ -41,18 +41,18 @@ Gem::Specification.new do |spec|
   end
 
   spec.platform              = Gem::Platform::RUBY
-  spec.required_ruby_version = '~> 2.3'
+  spec.required_ruby_version = '~> 2.7'
 
-  spec.add_development_dependency('bundler', '~> 1.17')
-  spec.add_development_dependency('rake', '~> 10.0')
-  spec.add_development_dependency('rspec', '~> 3.0')
-  spec.add_development_dependency('rubocop', '~> 0.74')
+  spec.add_development_dependency('bundler', '~> 2.1')
+  spec.add_development_dependency('rake', '~> 13.0')
+  spec.add_development_dependency('rspec', '~> 3.9')
+  spec.add_development_dependency('rubocop', '~> 0.91')
 
-  spec.add_runtime_dependency('async', '~> 1.20', '>= 1.20.1')
-  spec.add_runtime_dependency('async-dns', '~> 1.2', '>= 1.2.4')
-  spec.add_runtime_dependency('async-http', '~> 0.48', '>= 0.48.2')
-  spec.add_runtime_dependency('console', '~> 1.4', '>= 1.4.0')
-  spec.add_runtime_dependency('docker-api', '~> 1.34', '>= 1.34.2')
-  spec.add_runtime_dependency('prometheus-client', '~> 0.9', '>= 0.9.0')
-  spec.add_runtime_dependency('protocol-http', '~> 0.12', '>= 0.12.0')
+  spec.add_runtime_dependency('async', '~> 1.26', '>= 1.26.2')
+  spec.add_runtime_dependency('async-dns', '~> 1.2', '>= 1.2.5')
+  spec.add_runtime_dependency('async-http', '~> 0.52', '>= 0.52.5')
+  spec.add_runtime_dependency('console', '~> 1.9', '>= 1.9.0')
+  spec.add_runtime_dependency('docker-api', '~> 2.0', '>= 2.0.0')
+  spec.add_runtime_dependency('prometheus-client', '~> 2.1', '>= 2.1.0')
+  spec.add_runtime_dependency('protocol-http', '~> 0.20', '>= 0.20.1')
 end
