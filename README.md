@@ -1,6 +1,6 @@
 # Docker Container Discovery
 
-*Docker Container Discovery* (DCD) is a service discovery too for Docker
+*Docker Container Discovery* (DCD) is a service discovery tool for Docker
 containers. It exposes container addresses via DNS as they come and go.
 Utilizing a templating system, the available records can be adjusted to various
 deployment scenarios.
@@ -54,7 +54,7 @@ performed against. Valid values include:
 
   * name
 
-  The name of the image. Non-alphanumeric characters are replaced with hypens.
+  The name of the image. Non-alphanumeric characters are replaced with hyphens.
   (e.g. **example_company/my_server** becomes *example-company-my-server*)
 
   * ident
