@@ -10,27 +10,44 @@ module Docker
         @logger = logger
         @registry = registry
         @resolver = resolver
-        @endpoint = if options[:socket]
-                      "unix://#{options[:socket]}"
-                    elsif options[:endpoint]
-                      "tcp://#{options[:endpoint]}"
-                    elsif options[:host]
-                      port = options[:port] || 2375
-                      "tcp://#{options[:host]}:#{port}"
-                    elsif options[:url]
-                      options[:url]
-                    else
-                      Docker.default_socket_url
-                    end
+        @endpoint = parse_endpoint(options)
         @retries = options[:retries] || 0
         @timeout = options[:retry_timeout] || 5
-        @connection_options = {
+        @connection_options = parse_connection_options(options)
+
+        p @connection_options
+      end
+
+      def parse_endpoint(options)
+        endpoint = if options[:socket]
+                     "unix://#{options[:socket]}"
+                   elsif options[:endpoint]
+                     "tcp://#{options[:endpoint]}"
+                   elsif options[:host]
+                     port = options[:port] || 2375
+                     "tcp://#{options[:host]}:#{port}"
+                   elsif options[:url]
+                     options[:url]
+                   else
+                     Docker.env_url || Docker.default_socket_url
+                   end
+
+        return 'tcp://localhost:2375' if endpoint == 'tcp://'
+
+        endpoint
+      end
+
+      def parse_connection_options(options)
+        connection_options = {
           read_timeout: 60,
-          client_cert: options[:client_cert],
-          client_key: options[:client_key],
-          ssl_ca_file: options[:ssl_ca_file],
-          scheme: options[:scheme],
-        }.delete_if { |k, v| v.nil? }
+          ssl_verify_peer: options[:tls_verify],
+          ssl_ca_file: options[:tls_cacert],
+          client_cert: options[:tls_cert],
+          client_key: options[:tls_key]
+        }.delete_if { |_k, v| v.nil? }
+        connection_options['scheme'] = 'https' if connection_options.key?(:client_cert)
+
+        Docker.env_options.merge(connection_options)
       end
 
       def run

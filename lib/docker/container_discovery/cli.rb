@@ -3,7 +3,7 @@
 require 'prometheus/client'
 require 'optparse'
 require 'console'
-# require 'logger'
+require 'pathname'
 
 module Docker
   module ContainerDiscovery
@@ -70,6 +70,10 @@ module Docker
                                'docker-socket',
                                'docker-host',
                                'docker-port',
+                               'docker-tls-verify',
+                               'docker-tls-cacert',
+                               'docker-tls-cert',
+                               'docker-tls-key',
                                'connect-retries',
                                'connect-timeout',
                                'container-cidr',
@@ -209,11 +213,31 @@ module Docker
                   'using this mask') do |v|
           @resolver_opts[:container_cidr] = v
         end
-        parser.on('--docker-socket FILE', String,
+        parser.on('--docker-socket FILE', Pathname,
                   'Socket to listen for Docker events') do |v|
           raise OptionParser::InvalidArgument, "Invalid socket: #{v}" unless File.socket?(v)
 
           @client_opts[:socket] = v
+        end
+        parser.on('--[no-]docker-tls-verify',
+                  'Verify the connection with',
+                  'the remote docker server') do |v|
+          @client_opts[:tls_verify] = v
+        end
+        parser.on('--docker-tls-cacert FILE', Pathname,
+                  'CA file for the TLS connection',
+                  'to the remote docker server') do |v|
+          @client_opts[:tls_cacert] = v
+        end
+        parser.on('--docker-tls-cert FILE', Pathname,
+                  'Client cert for the TLS connection',
+                  'to the remote docker server') do |v|
+          @client_opts[:tls_cert] = v
+        end
+        parser.on('--docker-tls-key FILE', Pathname,
+                  'Client key for the TLS connection',
+                  'to the remote docker server') do |v|
+          @client_opts[:tls_key] = v
         end
         parser.on('--docker-host HOSTNAME', String,
                   'Host to connect to for Docker events') do |v|
@@ -252,6 +276,11 @@ module Docker
           IPAddr.new(addr)
         rescue IPAddr::InvalidAddressError => e
           raise OptionParser::InvalidArgument, e
+        end
+        parser.accept(Pathname) do |file|
+          raise OptionParser::InvalidArgument, "No such file: #{file}" unless File.exist?(file)
+
+          Pathname.new(file)
         end
       end
 

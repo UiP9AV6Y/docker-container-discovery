@@ -150,6 +150,25 @@ their behaviour use *false*, *no*, *off, or *0*.
 
   Default: 2375
 
+* `docker-tls-verify` (**DOCKER_TLS_VERIFY**)
+
+  Verify the connection with the remote docker server.
+
+* `docker-tls-cacert` (**DOCKER_TLS_CACERT**)
+
+  CA file for the TLS connection to
+  the remote docker server.
+
+* `docker-tls-cert` (**DOCKER_TLS_CERT**)
+
+  Client cert for the TLS connection to
+  the remote docker server.
+
+* `docker-tls-key` (**DOCKER_TLS_KEY**)
+
+  Client key for the TLS connection to
+  the remote docker server.
+
 * `--connect-retries` (**DCD_CONNECT_RETRIES**)
 
   Number of retries to connect to remote docker.
