@@ -5,17 +5,17 @@ AllCops:
   TargetRubyVersion: 2.7
 
 Metrics/AbcSize:
-  Max: 48
+  Enabled: false
 Metrics/BlockLength:
-  Max: 250
+  Enabled: false
 Metrics/ClassLength:
-  Max: 250
+  Enabled: false
 Metrics/MethodLength:
-  Max: 50
+  Enabled: false
 Metrics/CyclomaticComplexity:
-  Max: 16
+  Enabled: false
 Metrics/PerceivedComplexity:
-  Max: 16
+  Enabled: false
 
 Layout/LineLength:
   Max: 180
