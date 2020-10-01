@@ -250,15 +250,15 @@ their behaviour use *false*, *no*, *off, or *0*.
 
   Default: both
 
-* `--metrics-bind` (**DCD_METRICS_BIND**)
+* `--web-bind` (**DCD_WEB_BIND**)
 
-  Address to bind the metrics HTTP service to.
+  Address to bind the web werver to.
 
   Default: 0.0.0.0
 
-* `--metrics-port` (**DCD_METRICS_PORT**)
+* `--web-port` (**DCD_WEB_PORT**)
 
-  Port to bind the metrics HTTP service to.
+  Port to bind the web server to.
 
   Default: 19053
 

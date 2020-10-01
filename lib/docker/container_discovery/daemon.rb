@@ -3,9 +3,9 @@
 module Docker
   module ContainerDiscovery
     class Daemon
-      def initialize(clients, names, metrics, logger)
+      def initialize(clients, names, web, logger)
         @clients = Array(clients)
-        @metrics = metrics
+        @web = web
         @names = names
         @logger = logger
       end
@@ -24,11 +24,11 @@ module Docker
 
       def factory
         names = Thread.new { @names.run }
-        metrics = Thread.new { @metrics.run }
+        web = Thread.new { @web.run }
         clients = @clients.map do |client|
           Thread.new { client.run }
         end
-        guarded = clients + [names, metrics]
+        guarded = clients + [names, web]
         watchdog = Thread.new do
           loop do
             Kernel.sleep(1)
@@ -43,7 +43,7 @@ module Docker
         end
 
         names.name = 'names'
-        metrics.name = 'metrics'
+        web.name = 'web'
         watchdog.name = 'watchdog'
         clients.each_with_index { |thread, index| thread.name = "client#{index}" }
 

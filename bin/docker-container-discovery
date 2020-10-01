@@ -25,8 +25,8 @@ end
 logger = cli.logger
 client = cli.client
 names = cli.names
-metrics = cli.metrics
-daemon = Docker::ContainerDiscovery::Daemon.new(client, names, metrics, logger)
+web = cli.web
+daemon = Docker::ContainerDiscovery::Daemon.new(client, names, web, logger)
 
 Console.logger = logger
 

@@ -34,7 +34,7 @@ module Docker
         @resolver_opts = {}
         @client_opts = {}
         @names_opts = {}
-        @metrics_opts = {}
+        @web_opts = {}
 
         @parser = OptionParser.new do |o|
           decorate_init(o)
@@ -49,8 +49,8 @@ module Docker
           decorate_names(o)
 
           o.separator ''
-          o.separator 'Metrics options:'
-          decorate_metrics(o)
+          o.separator 'Webserver options:'
+          decorate_web(o)
 
           o.separator ''
           o.separator 'Common options:'
@@ -86,8 +86,8 @@ module Docker
                                'bind',
                                'port',
                                'proto',
-                               'metrics-bind',
-                               'metrics-port',
+                               'web-bind',
+                               'web-port',
                                'verbosity')
 
         @parser.parse!(args + argv + tpls)
@@ -125,8 +125,8 @@ module Docker
         @names ||= Docker::ContainerDiscovery::Names.new(resolver, registry, logger, @names_opts)
       end
 
-      def metrics
-        @metrics ||= Docker::ContainerDiscovery::Metrics.new(registry, logger, @metrics_opts)
+      def web
+        @web ||= Docker::ContainerDiscovery::Web.new(registry, logger, @web_opts)
       end
 
       private
@@ -257,17 +257,17 @@ module Docker
         end
       end
 
-      def decorate_metrics(parser)
-        parser.on('--metrics-bind ADDRESS', IPAddr,
-                  'Address to listen for incoming metric requests') do |v|
-          @metrics_opts[:bind] = v
+      def decorate_web(parser)
+        parser.on('--web-bind ADDRESS', IPAddr,
+                  'Address to listen for incoming http requests') do |v|
+          @web_opts[:bind] = v
         end
-        parser.on('--metrics-port PORT', Integer,
-                  'Port to listen for incoming metric requests') do |v|
+        parser.on('--web-port PORT', Integer,
+                  'Port to listen for incoming http requests') do |v|
           raise OptionParser::InvalidArgument, 'Port must be a positive number' if v < 1
           raise OptionParser::InvalidArgument, 'Port must be less than 65535' if v > 65_535
 
-          @metrics_opts[:port] = v
+          @web_opts[:port] = v
         end
       end
 

@@ -47,6 +47,6 @@ rescue StandardError => e
 end
 
 Async.logger.off!
-exit(1) unless check_http('127.0.0.1', Docker::ContainerDiscovery::Metrics::DEFAULT_PORT)
+exit(1) unless check_http('127.0.0.1', Docker::ContainerDiscovery::Web::DEFAULT_PORT)
 exit(1) unless check_dns('127.0.0.1', Docker::ContainerDiscovery::Names::DEFAULT_PORT)
 exit(0)

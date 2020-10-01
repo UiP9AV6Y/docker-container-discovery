@@ -14,8 +14,6 @@ module Docker
         @retries = options[:retries] || 0
         @timeout = options[:retry_timeout] || 5
         @connection_options = parse_connection_options(options)
-
-        p @connection_options
       end
 
       def parse_endpoint(options)
