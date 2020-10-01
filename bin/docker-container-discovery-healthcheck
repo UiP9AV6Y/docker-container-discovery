@@ -3,6 +3,8 @@
 
 require 'async'
 require 'async/dns'
+require 'net/http'
+require 'uri'
 
 begin
   require 'docker/container_discovery'
@@ -34,8 +36,10 @@ end
 def check_http(ip, port)
   task = Async do |t|
     t.with_timeout(1) do
-      s = TCPSocket.new(ip, port)
-      s.close
+      uri = URI("http://#{ip}:#{port}/health")
+      res = Net::HTTP.get_response(uri)
+
+      raise res.message unless res.is_a?(Net::HTTPSuccess)
     end
   end
 
