@@ -6,9 +6,9 @@ require 'docker'
 module Docker
   module ContainerDiscovery
     class Client
-      def initialize(resolver, registry, logger, options = {})
+      def initialize(resolver, metrics, logger, options = {})
         @logger = logger
-        @registry = registry
+        @metrics = metrics
         @resolver = resolver
         @endpoint = parse_endpoint(options)
         @retries = options[:retries] || 0
@@ -113,7 +113,7 @@ module Docker
 
       def setup(connection)
         Docker::Container.all({}, connection).each do |container|
-          @registry.add_container!(@endpoint)
+          @metrics.add_container!(@endpoint)
           @resolver.add_container(container)
         end
       rescue Docker::Error::DockerError, Excon::Error => e
@@ -133,12 +133,12 @@ module Docker
               when 'die'
                 @logger.debug(self) { "Got \"#{event.Action}\" docker event for #{cid}" }
                 container = Docker::Container.get(cid, {}, connection)
-                @registry.remove_container!(@endpoint)
+                @metrics.remove_container!(@endpoint)
                 @resolver.remove_container(container)
               when 'start'
                 @logger.debug(self) { "Got \"#{event.Action}\" docker event for #{cid}" }
                 container = Docker::Container.get(cid, {}, connection)
-                @registry.add_container!(@endpoint)
+                @metrics.add_container!(@endpoint)
                 @resolver.add_container(container)
               else
                 @logger.debug(self) { "Ignoring docker event for #{cid}: #{event.Action}" }

@@ -4,7 +4,7 @@ require 'prometheus/client/formats/text'
 
 module Docker
   module ContainerDiscovery
-    class Registry
+    class Metrics
       def initialize(storage, logger, options = {})
         @logger = logger
         @storage = storage

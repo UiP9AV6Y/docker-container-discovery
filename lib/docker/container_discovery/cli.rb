@@ -109,8 +109,8 @@ module Docker
         @label_formatter ||= Docker::ContainerDiscovery::LabelFormatter.new(*@label_templates)
       end
 
-      def registry
-        @registry ||= Docker::ContainerDiscovery::Registry.new(Prometheus::Client.registry, logger)
+      def metrics
+        @metrics ||= Docker::ContainerDiscovery::Metrics.new(Prometheus::Client.registry, logger)
       end
 
       def resolver
@@ -118,15 +118,15 @@ module Docker
       end
 
       def client
-        @client ||= Docker::ContainerDiscovery::Client.new(resolver, registry, logger, @client_opts)
+        @client ||= Docker::ContainerDiscovery::Client.new(resolver, metrics, logger, @client_opts)
       end
 
       def names
-        @names ||= Docker::ContainerDiscovery::Names.new(resolver, registry, logger, @names_opts)
+        @names ||= Docker::ContainerDiscovery::Names.new(resolver, metrics, logger, @names_opts)
       end
 
       def web
-        @web ||= Docker::ContainerDiscovery::Web.new(registry, logger, @web_opts)
+        @web ||= Docker::ContainerDiscovery::Web.new(metrics, logger, @web_opts)
       end
 
       private

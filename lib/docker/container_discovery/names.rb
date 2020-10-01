@@ -12,9 +12,9 @@ module Docker
 
       attr_reader :tld, :refresh, :retry, :expire, :min_ttl
 
-      def initialize(resolver, registry, logger, options = {})
+      def initialize(resolver, metrics, logger, options = {})
         @logger = logger
-        @registry = registry
+        @metrics = metrics
         @resolver = resolver
         @advertise = options[:advertise]
         @tld = (options[:tld] || 'docker.').chomp(LabelFormatter::LABEL_DELIM)
@@ -52,11 +52,11 @@ module Docker
                      false
                    end
 
-        @registry.receive_query!(record)
+        @metrics.receive_query!(record)
 
         return if resolved
 
-        @registry.fail_query!(record)
+        @metrics.fail_query!(record)
         transaction.fail!(:NXDomain)
       end
 

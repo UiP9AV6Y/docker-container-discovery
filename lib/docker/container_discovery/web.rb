@@ -25,13 +25,13 @@ module Docker
       CONTENT_TYPE_HTML = 'text/html;charset=utf-8'
       CONTENT_TYPE_JSON = 'application/json;charset=utf-8'
 
-      def initialize(registry, logger, options = {})
+      def initialize(metrics, logger, options = {})
         bind = options[:bind] || '0.0.0.0'
         port = options[:port] || DEFAULT_PORT
         reuse = options[:reuse] || false
         endpoint = Async::HTTP::Endpoint.parse("http://#{bind}:#{port}", reuse_port: reuse)
 
-        @registry = registry
+        @metrics = metrics
         @logger = logger
         @server = Async::HTTP::Server.for(endpoint) do |request|
           trace(request) { respond(request) }
@@ -52,12 +52,12 @@ module Docker
         method = request.method.downcase
         duration = Benchmark.realtime { response = yield }
 
-        @registry.complete_request!(method, path, response.status)
-        @registry.time_request!(method, path, duration)
+        @metrics.complete_request!(method, path, response.status)
+        @metrics.time_request!(method, path, duration)
 
         response
       rescue StandardError => e
-        @registry.fail_request!(e.class.name)
+        @metrics.fail_request!(e.class.name)
         @logger.warning(self, e) { "Error while processing request (#{request.method} #{request.path})" }
 
         Protocol::HTTP::Response.for_exception(e)
@@ -101,8 +101,8 @@ module Docker
       end
 
       def metrics_response
-        headers = { 'Content-Type' => @registry.content_type }
-        body = @registry.render
+        headers = { 'Content-Type' => @metrics.content_type }
+        body = @metrics.render
 
         response(200, headers, body)
       end
