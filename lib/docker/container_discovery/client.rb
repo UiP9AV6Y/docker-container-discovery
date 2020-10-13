@@ -61,6 +61,10 @@ module Docker
         end
       end
 
+      def to_s
+        "#{@endpoint}?retries=#{@retries}&timeout=#{@timeout}"
+      end
+
       protected
 
       def validate_connection(connection)

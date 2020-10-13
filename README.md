@@ -262,6 +262,14 @@ their behaviour use *false*, *no*, *off, or *0*.
 
   Default: 19053
 
+* `--log-format` (**DCD_LOG_FORMAT**)
+
+  Output format.
+
+  Valid values: simple, terminal, structured
+
+  Default: simple
+
 * `--verbosity` (**DCD_VERBOSITY**)
 
   Output verbosity.

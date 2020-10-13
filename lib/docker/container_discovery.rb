@@ -16,11 +16,11 @@ class Module
   end
 end
 
-require 'docker/container_discovery/cli'
 require 'docker/container_discovery/logger'
 require 'docker/container_discovery/client'
 require 'docker/container_discovery/names'
 require 'docker/container_discovery/web'
+require 'docker/container_discovery/cli'
 require 'docker/container_discovery/daemon'
 require 'docker/container_discovery/resolver'
 require 'docker/container_discovery/metrics'

@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
-require 'prometheus/client'
-require 'optparse'
 require 'console'
+require 'console/serialized/logger'
+require 'console/terminal/logger'
+require 'optparse'
 require 'pathname'
+require 'prometheus/client'
 
 module Docker
   module ContainerDiscovery
@@ -14,6 +16,11 @@ module Docker
         warning: ::Console::Logger::WARN,
         info: ::Console::Logger::INFO,
         debug: ::Console::Logger::DEBUG
+      }.freeze
+      LOG_FORMATS = {
+        simple: Docker::ContainerDiscovery::Logger,
+        terminal: ::Console::Terminal::Logger,
+        structured: ::Console::Serialized::Logger
       }.freeze
       FALSY_VALUES = %w[
         false
@@ -88,17 +95,23 @@ module Docker
                                'proto',
                                'web-bind',
                                'web-port',
+                               'log-format',
+                               'log-level',
                                'verbosity')
 
         @parser.parse!(args + argv + tpls)
       end
 
-      def log_formatter
-        @log_formatter ||= Docker::ContainerDiscovery::Logger.new
-      end
-
       def log_level
         @log_level ||= LOG_LEVELS[:info]
+      end
+
+      def log_format_factory
+        @log_format_factory ||= LOG_FORMATS[:simple]
+      end
+
+      def log_formatter
+        @log_formatter ||= log_format_factory.new
       end
 
       def logger
@@ -142,7 +155,14 @@ module Docker
           puts Docker::ContainerDiscovery::VERSION
           exit
         end
-        parser.on_tail('-V', '--verbosity LEVEL', LOG_LEVELS.keys,
+        parser.on_tail('--log-format FORMAT', LOG_FORMATS.keys,
+                  'Emit log messaged rendered',
+                  'using the given format',
+                  "(#{LOG_FORMATS.keys.join(', ')})") do |v|
+          @log_format_factory = LOG_FORMATS[v]
+        end
+        parser.on_tail('-V', '--verbosity LEVEL',
+                       '--log-level LEVEL', LOG_LEVELS.keys,
                        'Set the output verbosity',
                        "(#{LOG_LEVELS.keys.join(', ')})") do |v|
           @log_level = LOG_LEVELS[v]
