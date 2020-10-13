@@ -99,7 +99,7 @@ module Docker
                                'log-level',
                                'verbosity')
 
-        @parser.parse!(args + argv + tpls)
+        @parser.parse!(argv + args + tpls)
       end
 
       def log_level
