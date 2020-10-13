@@ -156,9 +156,9 @@ module Docker
           exit
         end
         parser.on_tail('--log-format FORMAT', LOG_FORMATS.keys,
-                  'Emit log messaged rendered',
-                  'using the given format',
-                  "(#{LOG_FORMATS.keys.join(', ')})") do |v|
+                       'Emit log messaged rendered',
+                       'using the given format',
+                       "(#{LOG_FORMATS.keys.join(', ')})") do |v|
           @log_format_factory = LOG_FORMATS[v]
         end
         parser.on_tail('-V', '--verbosity LEVEL',
