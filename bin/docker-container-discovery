@@ -16,7 +16,7 @@ cli = Docker::ContainerDiscovery::CLI.new($PROGRAM_NAME)
 
 begin
   cli.parse!
-rescue OptionParser::InvalidArgument => e
+rescue OptionParser::ParseError => e
   warn e
   warn cli
   exit 1
