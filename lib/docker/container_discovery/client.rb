@@ -48,6 +48,14 @@ module Docker
         Docker.env_options.merge(connection_options)
       end
 
+      def to_s
+        "\#<#{self.class} #{conn_url}>"
+      end
+
+      def conn_url
+        "#{@endpoint}?retries=#{@retries}&timeout=#{@timeout}"
+      end
+
       def run
         connection = retry_connect
 
@@ -59,10 +67,6 @@ module Docker
             schedule(connection)
           end
         end
-      end
-
-      def to_s
-        "#{@endpoint}?retries=#{@retries}&timeout=#{@timeout}"
       end
 
       protected

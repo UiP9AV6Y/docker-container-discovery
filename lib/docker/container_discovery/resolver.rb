@@ -24,6 +24,10 @@ module Docker
         @address_ident = Hash.new { |hash, key| hash[key] = [] }
       end
 
+      def to_s
+        "\#<#{self.class}>"
+      end
+
       def find_ident(address)
         @lock.synchronize do
           break @address_ident[address].first

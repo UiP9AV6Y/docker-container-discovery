@@ -10,6 +10,10 @@ module Docker
         @logger = logger
       end
 
+      def to_s
+        "\#<#{self.class} clients=#{@clients.length}>"
+      end
+
       def spawn
         threads = factory
 

@@ -38,7 +38,17 @@ module Docker
         end
       end
 
+      def to_s
+        "\#<#{self.class} #{endpoint_url}>"
+      end
+
+      def endpoint_url
+        @server.endpoint.to_url
+      end
+
       def run
+        @logger.info(self) { 'Starting web server...' }
+
         Async::Reactor.run(logger: @logger) do |task|
           task.async(logger: @logger) do
             @server.run

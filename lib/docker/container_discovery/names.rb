@@ -37,6 +37,10 @@ module Docker
         super(listen, logger: logger)
       end
 
+      def to_s
+        "\#<#{self.class}>"
+      end
+
       def process(name, resource_class, transaction)
         record = resource_class.name.split('::').last
         resolved = case record
