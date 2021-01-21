@@ -10,7 +10,7 @@ module Docker
     class Names < Async::DNS::Server
       DEFAULT_PORT = 10_053
 
-      attr_reader :tld, :refresh, :retry, :expire, :min_ttl
+      attr_reader :tld, :refresh, :retry, :expire, :min_ttl, :res_ttl
 
       def initialize(resolver, metrics, logger, options = {})
         @logger = logger
@@ -22,6 +22,7 @@ module Docker
         @retry = options[:retry] || 900
         @expire = options[:expire] || 3_600_000
         @min_ttl = options[:min_ttl] || 172_800
+        @res_ttl = options[:res_ttl] || Async::DNS::Transaction.DEFAULT_TTL
 
         bind = options[:bind] || '0.0.0.0'
         port = options[:port] || DEFAULT_PORT
@@ -88,8 +89,17 @@ module Docker
         master = Resolv::DNS::Name.create("#{zone_master}.")
         contact = Resolv::DNS::Name.create("#{zone_contact}.")
 
-        transaction.respond!(master, contact, serial, @refresh, @retry, @expire, @min_ttl)
-        transaction.append!(transaction.question, Resolv::DNS::Resource::IN::NS, section: :authority)
+        transaction.respond!(master,
+                             contact,
+                             serial,
+                             @refresh,
+                             @retry,
+                             @expire,
+                             @min_ttl,
+                             ttl: @res_ttl)
+        transaction.append!(transaction.question,
+                            Resolv::DNS::Resource::IN::NS,
+                            section: :authority)
 
         true
       end
@@ -99,7 +109,7 @@ module Docker
 
         response = Resolv::DNS::Name.create("#{zone_master}.")
 
-        transaction.respond!(response)
+        transaction.respond!(response, ttl: @res_ttl)
 
         true
       end
@@ -113,7 +123,7 @@ module Docker
           raise 'unable to determine address advertisement' if advertise_addr.nil?
 
           @logger.debug(self) { 'Received query for zone nameserver' }
-          transaction.respond!(advertise_addr)
+          transaction.respond!(advertise_addr, ttl: @res_ttl)
           return true
         end
 
@@ -126,7 +136,7 @@ module Docker
 
         @logger.debug(self) { "Query for #{ident} (A) yielded #{result.length} addresses" }
         transaction.append_question!
-        transaction.add(response)
+        transaction.add(response, ttl: @res_ttl)
 
         true
       end
@@ -144,7 +154,7 @@ module Docker
         response = Resolv::DNS::Name.create("#{result}.#{@tld}.")
 
         @logger.debug(self) { "Query for #{address} (PTR) yielded primary: #{result}" }
-        transaction.respond!(response)
+        transaction.respond!(response, ttl: @res_ttl)
 
         true
       end
