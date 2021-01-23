@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'socket'
+
 RSpec.describe Docker::ContainerDiscovery::Resolver do
   subject do
     formatter = Docker::ContainerDiscovery::LabelFormatter.new('{image.name}.spec')
@@ -70,9 +72,9 @@ RSpec.describe Docker::ContainerDiscovery::Resolver do
     end
   end
 
-  describe '#advertise_addr' do
+  describe '#address' do
     it do
-      expect(subject.advertise_addr).to eq('127.2.4.6')
+      expect(subject.address).to eq('127.2.4.6')
     end
   end
 
@@ -83,6 +85,76 @@ RSpec.describe Docker::ContainerDiscovery::Resolver do
       context "using '#{input}'" do
         it do
           expect(subject.reverse(input)).to eq(output)
+        end
+      end
+    end
+  end
+
+  describe '#select_address' do
+    test_cases = [
+      [nil, '192.168.0.128'],
+      ['10.1.2.3/24', nil],
+      [IPAddr.new('192.168.128.0/24'), '192.168.128.1']
+    ]
+    mock_addresses = [
+      '127.0.0.1',
+      '192.168.0.128',
+      '192.168.128.1',
+      '::1'
+    ]
+
+    context 'with pool' do
+      let(:pool) { mock_addresses }
+
+      it do
+        expect(Socket).not_to receive(:ip_address_list)
+        subject.select_address(pool)
+      end
+
+      context 'with lazy behaviour' do
+        it do
+          actual = subject.select_address(pool, '10.1.2.3/32', true)
+          expect(actual).to eq('10.1.2.3')
+        end
+
+        it do
+          actual = subject.select_address(pool, '10.1.2.3/24', true)
+          expect(actual).to be_nil
+        end
+      end
+
+      test_cases.each do |(input, output)|
+        it do
+          actual = subject.select_address(pool, input)
+          expect(actual).to eq(output)
+        end
+      end
+    end
+
+    context 'without pool' do
+      before do
+        mock_interface_addr = mock_addresses.map do |a|
+          Addrinfo.new(Socket.sockaddr_in(53, a))
+        end
+        allow(Socket).to receive(:ip_address_list).and_return(mock_interface_addr)
+      end
+
+      context 'with lazy behaviour' do
+        it do
+          actual = subject.select_address(nil, '10.1.2.3/32', true)
+          expect(actual).to eq('10.1.2.3')
+        end
+
+        it do
+          actual = subject.select_address(nil, '10.1.2.3/24', true)
+          expect(actual).to be_nil
+        end
+      end
+
+      test_cases.each do |(input, output)|
+        it do
+          actual = subject.select_address(nil, input)
+          expect(actual).to eq(output)
         end
       end
     end

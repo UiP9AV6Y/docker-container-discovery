@@ -29,7 +29,7 @@ module Docker
         @container_cidr = options[:container_cidr]
         @hostname = options[:advertise_name] || 'ns'
         @contact = (options[:contact] || 'hostmaster').gsub('.', '\.')
-        @address = options[:advertise_address]
+        @address = select_address(nil, options[:advertise_address], true)
 
         @tld = (options[:tld] || 'docker.').chomp(LabelFormatter::LABEL_DELIM)
         @refresh = options[:refresh] || 1200
@@ -92,26 +92,9 @@ module Docker
 
       # @return [Resolv::DNS::Name, nil]
       # @return [nil] if no advertised address is available
-      # @see advertise_addr
+      # @see address
       def zone_ptr
-        return @zone_ptr unless @zone_ptr.nil?
-
-        addr = advertise_addr
-        return nil if addr.nil?
-
-        @zone_ptr = rev_name(addr)
-        @zone_ptr
-      end
-
-      # @return [Resolv::DNS::Name]
-      # @return [nil] if the advertised address is not part of the
-      #   address pool.
-      def advertise_addr
-        return @advertise_addr unless @advertise_addr.nil?
-
-        advertise_candidates = Socket.ip_address_list.map(&:ip_address)
-        @advertise_addr = select_address(advertise_candidates, @address, true)
-        @advertise_addr
+        @zone_ptr ||= @address.nil? ? nil : rev_name(@address)
       end
 
       # @param addr [String]
@@ -195,7 +178,7 @@ module Docker
       # @param cidr [IPAddr, String, nil]
       # @param lazy [Boolean]
       # @return [String]
-      def select_address(pool, cidr = nil, lazy = false)
+      def select_address(pool = nil, cidr = nil, lazy = false)
         mask = case cidr
                when IPAddr
                  cidr
@@ -207,6 +190,7 @@ module Docker
 
         return mask.to_s if lazy && mask.prefix == 32
 
+        pool ||= Socket.ip_address_list.map(&:ip_address)
         pool.find do |addr|
           addr && !SELECT_EXCLUDES.include?(addr) && mask.include?(addr)
         end
