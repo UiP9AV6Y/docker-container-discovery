@@ -1,17 +1,25 @@
 # frozen_string_literal: true
 
 require 'date'
+require 'ipaddr'
+require 'resolv'
+require 'socket'
+require 'async/dns'
 
 module Docker
   module ContainerDiscovery
     class Resolver
-      attr_reader :last_update
+      attr_reader :last_update,
+                  :tld, :res_ttl,
+                  :hostname, :address,
+                  :refresh, :retry, :expire, :min_ttl
 
       LABEL_NS = 'com.docker.container-discovery/'
       IGNORE_LABEL = "#{LABEL_NS}ignore"
       ADVERTISE_LABEL = "#{LABEL_NS}advertise"
       IDENT_LABEL = "#{LABEL_NS}ident."
       SELECT_EXCLUDES = ['127.0.0.1', '::1'].freeze
+      REV_TLD = 'in-addr.arpa'
 
       def initialize(formatter, logger, options = {})
         @formatter = formatter
@@ -19,6 +27,16 @@ module Docker
         @lock = Mutex.new
         @last_update = Time.at(0).to_datetime
         @container_cidr = options[:container_cidr]
+        @hostname = options[:advertise_name] || 'ns'
+        @contact = (options[:contact] || 'hostmaster').gsub('.', '\.')
+        @address = options[:advertise_address]
+
+        @tld = (options[:tld] || 'docker.').chomp(LabelFormatter::LABEL_DELIM)
+        @refresh = options[:refresh] || 1200
+        @retry = options[:retry] || 900
+        @expire = options[:expire] || 3_600_000
+        @min_ttl = options[:min_ttl] || 172_800
+        @res_ttl = options[:res_ttl] || Async::DNS::Transaction::DEFAULT_TTL
 
         @ident_address = Docker::ContainerDiscovery::ArrayTree.new
         @address_ident = Hash.new { |hash, key| hash[key] = [] }
@@ -26,6 +44,82 @@ module Docker
 
       def to_s
         "\#<#{self.class}>"
+      end
+
+      # @return [Resolv::DNS::Resource::SOA]
+      def authority
+        Resolv::DNS::Resource::SOA.new(zone_master,
+                                       zone_contact,
+                                       serial,
+                                       @refresh,
+                                       @retry,
+                                       @expire,
+                                       @min_ttl)
+      end
+
+      # @param name [String]
+      # @return [Resolv::DNS::Name]
+      def name(name = '')
+        labels = [@tld, '']
+        labels.unshift(name) unless name.empty?
+
+        Resolv::DNS::Name.create(labels.join(LabelFormatter::LABEL_DELIM))
+      end
+
+      # @param addr [IPAddr, String]
+      # @return [Resolv::DNS::Name]
+      def rev_name(addr)
+        name = reverse(addr)
+        labels = [name, REV_TLD, '']
+
+        Resolv::DNS::Name.create(labels.join(LabelFormatter::LABEL_DELIM))
+      end
+
+      # @return [Fixnum]
+      def serial
+        @last_update.to_time.to_i
+      end
+
+      # @return [Resolv::DNS::Name]
+      def zone_master
+        @zone_master ||= name(@hostname)
+      end
+
+      # @return [Resolv::DNS::Name]
+      def zone_contact
+        @zone_contact ||= name(@contact)
+      end
+
+      # @return [Resolv::DNS::Name, nil]
+      # @return [nil] if no advertised address is available
+      # @see advertise_addr
+      def zone_ptr
+        return @zone_ptr unless @zone_ptr.nil?
+
+        addr = advertise_addr
+        return nil if addr.nil?
+
+        @zone_ptr = rev_name(addr)
+        @zone_ptr
+      end
+
+      # @return [Resolv::DNS::Name]
+      # @return [nil] if the advertised address is not part of the
+      #   address pool.
+      def advertise_addr
+        return @advertise_addr unless @advertise_addr.nil?
+
+        advertise_candidates = Socket.ip_address_list.map(&:ip_address)
+        @advertise_addr = select_address(advertise_candidates, @address, true)
+        @advertise_addr
+      end
+
+      # @param addr [String]
+      # @return [String]
+      # @example Reverse an Address
+      #   resolver.reverse("127.0.0.24") #=> "24.0.0.127"
+      def reverse(addr)
+        addr.to_s.split(LabelFormatter::LABEL_DELIM).reverse.join(LabelFormatter::LABEL_DELIM)
       end
 
       def find_ident(address)
@@ -97,6 +191,10 @@ module Docker
         end
       end
 
+      # @param pool [Array]
+      # @param cidr [IPAddr, String, nil]
+      # @param lazy [Boolean]
+      # @return [String]
       def select_address(pool, cidr = nil, lazy = false)
         mask = case cidr
                when IPAddr

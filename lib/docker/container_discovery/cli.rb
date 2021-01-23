@@ -172,38 +172,38 @@ module Docker
       def decorate_names(parser)
         parser.on('--tld DOMAIN',
                   'Top level domain/Authority zone') do |v|
-          @names_opts[:tld] = v
+          @resolver_opts[:tld] = v
         end
         parser.on('--advertise ADDRESS', IPAddr,
                   'Advertise address for the server.',
                   'If an address is given with a prefix',
                   '(e.g. 192.168.1.0/24) the available',
                   'interfaces are parsed for a match.') do |v|
-          @names_opts[:advertise] = v
+          @resolver_opts[:advertise_address] = v
         end
         parser.on('--refresh SECONDS', Integer,
                   'Zone refresh interval') do |v|
           raise OptionParser::InvalidArgument, 'Refresh must be a positive number' if v < 1
 
-          @names_opts[:refresh] = v
+          @resolver_opts[:refresh] = v
         end
         parser.on('--retry SECONDS', Integer,
                   'Zone retry interval') do |v|
           raise OptionParser::InvalidArgument, 'Retry must be a positive number' if v < 1
 
-          @names_opts[:retry] = v
+          @resolver_opts[:retry] = v
         end
         parser.on('--expire SECONDS', Integer,
                   'Zone expiration') do |v|
           raise OptionParser::InvalidArgument, 'Expire must be a positive number' if v < 1
 
-          @names_opts[:expire] = v
+          @resolver_opts[:expire] = v
         end
         parser.on('--min-ttl SECONDS', Integer,
                   'Zone min TTL') do |v|
           raise OptionParser::InvalidArgument, 'Min TTL must be a positive number' if v < 1
 
-          @names_opts[:min_ttl] = v
+          @resolver_opts[:min_ttl] = v
         end
         parser.on('--bind ADDRESS', IPAddr,
                   'Address to listen for incoming connections') do |v|

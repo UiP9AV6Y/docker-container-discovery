@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'resolv'
-require 'ipaddr'
-require 'socket'
 require 'async/dns'
 
 module Docker
@@ -10,19 +8,10 @@ module Docker
     class Names < Async::DNS::Server
       DEFAULT_PORT = 10_053
 
-      attr_reader :tld, :refresh, :retry, :expire, :min_ttl, :res_ttl
-
       def initialize(resolver, metrics, logger, options = {})
         @logger = logger
         @metrics = metrics
         @resolver = resolver
-        @advertise = options[:advertise]
-        @tld = (options[:tld] || 'docker.').chomp(LabelFormatter::LABEL_DELIM)
-        @refresh = options[:refresh] || 1200
-        @retry = options[:retry] || 900
-        @expire = options[:expire] || 3_600_000
-        @min_ttl = options[:min_ttl] || 172_800
-        @res_ttl = options[:res_ttl] || Async::DNS::Transaction.DEFAULT_TTL
 
         bind = options[:bind] || '0.0.0.0'
         port = options[:port] || DEFAULT_PORT
@@ -40,6 +29,12 @@ module Docker
 
       def to_s
         "\#<#{self.class}>"
+      end
+
+      def run
+        @logger.info(self) { "Starting name server (#{@resolver.zone_master})..." }
+
+        super.run
       end
 
       def process(name, resource_class, transaction)
@@ -65,38 +60,21 @@ module Docker
         transaction.fail!(:NXDomain)
       end
 
-      def serial
-        @resolver.last_update.to_time.to_i
-      end
-
-      def zone_master
-        "ns.#{@tld}"
-      end
-
-      def zone_contact
-        "hostmaster.#{@tld}"
-      end
-
-      def advertise_addr
-        @advertise_addr ||= select_address(@advertise)
-      end
-
       protected
 
       def process_soa(name, transaction)
-        return false unless name == @tld
+        return false unless name == @resolver.tld
 
-        master = Resolv::DNS::Name.create("#{zone_master}.")
-        contact = Resolv::DNS::Name.create("#{zone_contact}.")
+        response = @resolver.authority
 
-        transaction.respond!(master,
-                             contact,
-                             serial,
-                             @refresh,
-                             @retry,
-                             @expire,
-                             @min_ttl,
-                             ttl: @res_ttl)
+        transaction.respond!(response.mname,
+                             response.rname,
+                             response.serial,
+                             response.refresh,
+                             response.retry,
+                             response.expire,
+                             response.minimum,
+                             ttl: @resolver.res_ttl)
         transaction.append!(transaction.question,
                             Resolv::DNS::Resource::IN::NS,
                             section: :authority)
@@ -105,25 +83,26 @@ module Docker
       end
 
       def process_ns(name, transaction)
-        return false unless name == @tld
+        return false unless name == @resolver.tld
 
-        response = Resolv::DNS::Name.create("#{zone_master}.")
+        response = @resolver.zone_master
 
-        transaction.respond!(response, ttl: @res_ttl)
+        transaction.respond!(response, ttl: @resolver.res_ttl)
 
         true
       end
 
       def process_a(name, transaction)
-        postfix = ".#{@tld}"
+        postfix = ".#{@resolver.tld}"
 
         return false unless name.end_with?(postfix)
 
-        if name == zone_master
-          raise 'unable to determine address advertisement' if advertise_addr.nil?
+        if name == @resolver.zone_master.to_s
+          response = @resolver.advertise_addr
+          raise 'unable to determine address advertisement' if response.nil?
 
           @logger.debug(self) { 'Received query for zone nameserver' }
-          transaction.respond!(advertise_addr, ttl: @res_ttl)
+          transaction.respond!(response, ttl: @resolver.res_ttl)
           return true
         end
 
@@ -136,33 +115,27 @@ module Docker
 
         @logger.debug(self) { "Query for #{ident} (A) yielded #{result.length} addresses" }
         transaction.append_question!
-        transaction.add(response, ttl: @res_ttl)
+        transaction.add(response, ttl: @resolver.res_ttl)
 
         true
       end
 
       def process_ptr(name, transaction)
-        postfix = '.in-addr.arpa'
+        postfix = ".#{Docker::ContainerDiscovery::Resolver::REV_TLD}"
 
         return false unless name.end_with?(postfix)
 
-        address = name.chomp(postfix).split(LabelFormatter::LABEL_DELIM).reverse.join(LabelFormatter::LABEL_DELIM)
+        address = @resolver.reverse(name.chomp(postfix))
         result = @resolver.find_ident(address)
 
         return false if result.nil?
 
-        response = Resolv::DNS::Name.create("#{result}.#{@tld}.")
+        response = @resolver.name(result)
 
         @logger.debug(self) { "Query for #{address} (PTR) yielded primary: #{result}" }
-        transaction.respond!(response, ttl: @res_ttl)
+        transaction.respond!(response, ttl: @resolver.res_ttl)
 
         true
-      end
-
-      def select_address(advertise = nil)
-        advertise_candidates = Socket.ip_address_list.map(&:ip_address)
-
-        @resolver.select_address(advertise_candidates, advertise, true)
       end
     end
   end
