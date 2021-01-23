@@ -94,11 +94,12 @@ module Docker
 
       def process_a(name, transaction)
         postfix = ".#{@resolver.tld}"
+        ident = name.chomp(postfix)
 
-        return false unless name.end_with?(postfix)
+        return false if name.length == ident.length
 
-        if name == @resolver.zone_master.to_s
-          response = @resolver.advertise_addr
+        if ident == @resolver.hostname
+          response = @resolver.address
           raise 'unable to determine address advertisement' if response.nil?
 
           @logger.debug(self) { 'Received query for zone nameserver' }
@@ -106,7 +107,6 @@ module Docker
           return true
         end
 
-        ident = name.chomp(postfix)
         result = @resolver.find_address(ident)
 
         return false if result.empty?
@@ -122,10 +122,18 @@ module Docker
 
       def process_ptr(name, transaction)
         postfix = ".#{Docker::ContainerDiscovery::Resolver::REV_TLD}"
-
-        return false unless name.end_with?(postfix)
-
         address = @resolver.reverse(name.chomp(postfix))
+
+        return false if name.length == address.length
+
+        if address == @resolver.address
+          response = @resolver.zone_master
+
+          @logger.debug(self) { 'Received query for zone ptr' }
+          transaction.respond!(response, ttl: @resolver.res_ttl)
+          return true
+        end
+
         result = @resolver.find_ident(address)
 
         return false if result.nil?
