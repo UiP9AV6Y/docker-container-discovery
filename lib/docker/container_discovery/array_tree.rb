@@ -37,6 +37,17 @@ module Docker
           dig([branch])
         end
 
+        # @param branch [Array] node hierarchy from the root with the
+        #   current key being the last item
+        # @param visitor [Proc] invoked with key + tree branch
+        def visit(branch, visitor)
+          @value.each { |v| visitor.call(v, branch) }
+          @children.each do |c|
+            backtrace = Array.new(branch) << c.key
+            c.visit(backtrace, visitor)
+          end
+        end
+
         def remove(value, branch)
           search(branch).map do |child|
             value.map { |v| child.value.delete(v) }.compact
@@ -140,6 +151,21 @@ module Docker
 
       def [](branch)
         @root.dig([branch]) # rubocop:disable Style/SingleArgumentDig
+      end
+
+      def each(&block)
+        # root key is left out intentionally
+        @root.visit([], block)
+      end
+
+      # @yieldparam [Object] value node value
+      # @yieldparam [Array] node hierarchy keys
+      # @yield [value, branch] node value and its tree hierarchy
+      # @return [Array] block return value aggregation
+      def map
+        values = []
+        each { |v, branch| values << yield(v, branch) }
+        values
       end
 
       def set(value, *branch)

@@ -221,4 +221,96 @@ RSpec.describe Docker::ContainerDiscovery::ArrayTree do
       end
     end
   end
+
+  describe '#each' do
+    context 'when empty' do
+      it do
+        actual = []
+        subject.each { |v, branch| actual << [v, branch] }
+
+        expect(actual).to be_empty
+      end
+    end
+
+    context 'with items' do
+      let(:expected) do
+        [
+          ['0', []],
+          ['1', %w[one]],
+          ['2', %w[one two]],
+          ['3', %w[one two three]],
+          ['E', %w[one two three]],
+          ['€', %w[one TWO three]],
+          ['³', %w[one two tree]],
+          ['four', %w[1 2 3 4]]
+        ]
+      end
+
+      subject do
+        s = described_class.new
+
+        s.append('0')
+        s.append('1', 'one')
+        s.append('2', 'one', 'two')
+        s.append('3', 'one', 'two', 'three')
+        s.append('E', 'one', 'two', 'three')
+        s.append('€', 'one', 'TWO', 'three')
+        s.append('³', 'one', 'two', 'tree')
+        s.append('four', '1', '2', '3', '4')
+        s
+      end
+
+      it do
+        actual = []
+        subject.each { |v, branch| actual << [v, branch] }
+
+        expect(actual).to match_array(expected)
+      end
+    end
+  end
+
+  describe '#map' do
+    context 'when empty' do
+      it do
+        actual = subject.map { |v, branch| [v].concat(branch) }
+
+        expect(actual).to be_empty
+      end
+    end
+
+    context 'with items' do
+      let(:expected) do
+        [
+          %w[0],
+          %w[1 one],
+          %w[2 one two],
+          %w[3 one two three],
+          %w[E one two three],
+          %w[€ one TWO three],
+          %w[³ one two tree],
+          %w[four 1 2 3 4]
+        ]
+      end
+
+      subject do
+        s = described_class.new
+
+        s.append('0')
+        s.append('1', 'one')
+        s.append('2', 'one', 'two')
+        s.append('3', 'one', 'two', 'three')
+        s.append('E', 'one', 'two', 'three')
+        s.append('€', 'one', 'TWO', 'three')
+        s.append('³', 'one', 'two', 'tree')
+        s.append('four', '1', '2', '3', '4')
+        s
+      end
+
+      it do
+        actual = subject.map { |v, branch| [v].concat(branch) }
+
+        expect(actual).to match_array(expected)
+      end
+    end
+  end
 end
