@@ -24,13 +24,15 @@ module Docker
       CONTENT_TYPE_PLAIN = 'text/plain;charset=utf-8'
       CONTENT_TYPE_HTML = 'text/html;charset=utf-8'
       CONTENT_TYPE_JSON = 'application/json;charset=utf-8'
+      DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
 
-      def initialize(metrics, logger, options = {})
+      def initialize(zone, metrics, logger, options = {})
         bind = options[:bind] || '0.0.0.0'
         port = options[:port] || DEFAULT_PORT
         reuse = options[:reuse] || false
         endpoint = Async::HTTP::Endpoint.parse("http://#{bind}:#{port}", reuse_port: reuse)
 
+        @zone = zone
         @metrics = metrics
         @logger = logger
         @server = Async::HTTP::Server.for(endpoint) do |request|
@@ -85,6 +87,8 @@ module Docker
           metrics_response
         when '/health'
           health_response
+        when '/zone'
+          zone_response
         else
           not_found_response
         end
@@ -120,6 +124,18 @@ module Docker
       def health_response
         headers = { 'Content-Type' => CONTENT_TYPE_JSON }
         body = '{"status": "ok"}'
+
+        response(200, headers, body)
+      end
+
+      def zone_response
+        headers = {
+          'Expires' => @zone.expires.strftime(DATE_FORMAT),
+          'Last-Modified' => @zone.last_modified.strftime(DATE_FORMAT),
+          'Cache-Control' => "public, max-age=#{@zone.max_age}",
+          'Content-Type' => @zone.content_type
+        }
+        body = @zone.render
 
         response(200, headers, body)
       end

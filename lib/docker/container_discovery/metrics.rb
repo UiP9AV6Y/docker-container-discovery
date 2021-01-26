@@ -18,7 +18,7 @@ module Docker
       end
 
       def content_type
-        @renderer::MEDIA_TYPE
+        @renderer::CONTENT_TYPE
       end
 
       def fail_query!(in_class)

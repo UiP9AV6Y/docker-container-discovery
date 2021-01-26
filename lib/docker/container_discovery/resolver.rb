@@ -105,6 +105,20 @@ module Docker
         addr.to_s.split(LabelFormatter::LABEL_DELIM).reverse.join(LabelFormatter::LABEL_DELIM)
       end
 
+      def name_records
+        @ident_address.map do |addr, labels|
+          ident = labels.join(LabelFormatter::LABEL_DELIM)
+          [name(ident), Resolv::DNS::Resource::IN::A.new(addr)]
+        end
+      end
+
+      def address_records
+        @address_ident.map do |addr, idents|
+          ptr = name(idents.first)
+          [rev_name(addr), Resolv::DNS::Resource::PTR.create(ptr)]
+        end
+      end
+
       def find_ident(address)
         @lock.synchronize do
           break @address_ident[address].first

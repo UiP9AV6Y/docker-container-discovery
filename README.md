@@ -5,8 +5,47 @@ containers. It exposes container addresses via DNS as they come and go.
 Utilizing a templating system, the available records can be adjusted to various
 deployment scenarios.
 
-The server provides 2 interfaces; a DNS service and a HTTP endpoint providing
-application metrics for consumption by Prometheus.
+The server provides 2 interfaces; a DNS service and a HTTP endpoint
+
+## HTTP endpoint
+
+Metrics, health and record information can be obtained from this service.
+
+### `/metrics`
+
+The metrics are formatted as Prometheus/OpenMetrics compatible output:
+
+* `dcd_queries_total`
+
+  DNS queries received
+* `dcd_queries_failed`
+
+  DNS queries which yielded NXDOMAIN
+* `dcd_requests_total`
+
+  The total number of HTTP requests handled by the web server
+* `dcd_request_duration_seconds`
+
+  The HTTP response duration of the web server
+
+* `dcd_exceptions_total`
+
+  The total number of exceptions raised by the web server
+* `dcd_containers`
+
+  Number of containers currently being tracked
+
+### `/health`
+
+Health monitoring information about the server itself. The response is formatted
+as JSON and is currently the verbatim response `{"status": "ok"}`.
+
+### `/zone`
+
+Information export in a machine readable format. The response contains caching
+instructions in the headers which are composed of the DNS service TTL values.
+
+## DNS service
 
 The DNS service provides SOA, NS, A and PTR records.
 

@@ -126,6 +126,10 @@ module Docker
         @metrics ||= Docker::ContainerDiscovery::Metrics.new(Prometheus::Client.registry, logger)
       end
 
+      def zone
+        @zone ||= Docker::ContainerDiscovery::Zone.new(resolver, logger, @web_opts)
+      end
+
       def resolver
         @resolver ||= Docker::ContainerDiscovery::Resolver.new(label_formatter, logger, @resolver_opts)
       end
@@ -139,7 +143,7 @@ module Docker
       end
 
       def web
-        @web ||= Docker::ContainerDiscovery::Web.new(metrics, logger, @web_opts)
+        @web ||= Docker::ContainerDiscovery::Web.new(zone, metrics, logger, @web_opts)
       end
 
       private
